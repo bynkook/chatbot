@@ -1,3 +1,17 @@
+# BK ADDED
+backup/
+output/
+output_*/
+.venvllm/
+.vscode/
+deps/
+dist*/
+exe*/
+model*/
+streamlit/
+*.csv
+*.png
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
