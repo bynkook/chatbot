@@ -74,7 +74,7 @@ pip install --no-index --find-links=[deps 폴더] [llama-cpp-python whl]
 설치 확인:
 pip show llama-cpp-python
 
-# chat_app.py
+# chat_app.py 실행 방법
 .\.venvllm\Scripts\activate
 in command window or
 .\.venvllm\Scripts\activate.ps1
