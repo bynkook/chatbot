@@ -70,6 +70,7 @@ py -3.12 -m build --wheel
 
 powershell 에서 로컬 파일 설치(오프라인):
 pip install --no-index --find-links=[deps 폴더] [llama-cpp-python whl]
+pip install --no-index --find-links=./deps llama_cpp_python-0.3.16-cp312-cp312-win_amd64.whl
 
 설치 확인:
 pip show llama-cpp-python
