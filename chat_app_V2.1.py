@@ -136,7 +136,7 @@ def chat_once(llm: Llama, messages: List[Dict[str,str]], temperature: float, top
 # ---------- sidebar ----------
 with st.sidebar:
     st.header("⚙️ Settings")
-    model_path = st.text_input("Model (.gguf) path", r"d:\mycode\chatbot\model\Qwen3-4B-Instruct-2507-Q3_K_S.gguf")
+    model_path = st.text_input("Model (.gguf) path", r"c:\Users\BKHOME\mycode\chatbot\models\Qwen3-4B-Instruct-2507-Q3_K_S.gguf")
     chat_fmt_choice = st.selectbox("chat_format", ["auto","qwen","llama-3","none"], index=0)
     ctx = st.number_input("n_ctx", 256, 8192, 2048, 256)
     threads = st.number_input("n_threads", 1, 64, max(1,(os.cpu_count() or 4)-1), 1)
@@ -166,7 +166,7 @@ with st.sidebar:
     st.subheader("🧮 Regression bundle")
     if "bundle" not in st.session_state:
         st.session_state.bundle = None
-    bundle_path = st.text_input("bundle (.joblib) path", r"d:\mycode\rcmodel\output\xgb_bundle.joblib", key="bundle_path")    
+    bundle_path = st.text_input("bundle (.joblib) path", r"c:\Users\BKHOME\mycode\rcmodel\output\xgb_bundle.joblib", key="bundle_path")    
     load_bundle_btn = st.button("Load bundle", width="stretch", key="btn_load_bundle")
 
     if load_bundle_btn:
@@ -249,47 +249,33 @@ if user_msg:
             # 모든 입력 확보 → 예측 수행
             with st.chat_message("assistant"):
                 try:
-                    # import pandas as pd                    
-                    # preds = st.session_state.bundle.predict_all(collected)
-                    # st.caption(f"inputs: { {k: collected.get(k) for k in REQUIRED_INPUT} }")
-                    # df_show = pd.DataFrame([preds], columns=["Sm","bd","rho","phi_mn"])
-                    # st.markdown("**예측 결과**")
-                    # try:
-                    #     st.dataframe(df_show, width="stretch")
-                    # except Exception:
-                    #     st.dataframe(df_show, use_container_width=True) # 미지원시 폴백                    
-                    
-                    # st.session_state.history.append({
-                    #     "role":"assistant",
-                    #     "content": "예측 결과: " + ", ".join(f"{k}={v:.6g}" for k, v in preds.items())
-                    # })
                     preds = st.session_state.bundle.predict_all(collected)
-                    # LLM 을 이용하여 자연어 답변 요약 생성
+                    # LLM 을 이용한 자연어 요약
                     sys_prompt = (
-                        "너는 구조공항 예측결과를 한국어로 보고하는 도우미다."
-                        "주어진 수치들을 변경하지 말고 그대로 사용해 한 문단으로 설명한다."
-                        )
+                        "너는 구조공학 예측 결과를 한국어로 보고하는 도우미다. "
+                        "주어진 수치를 변경하지 말고 그대로 사용해서 한 문단으로 간결히 설명하라."
+                    )
                     user_prompt = (
-                        "입력값과 예측값을 문장으로 요약하세요\n"
+                        "입력값과 예측값을 문장으로 요약하세요.\n"
                         f"- 입력: fck={collected.get('fck')} MPa, "
                         f"fy={collected.get('fy')} MPa, "
                         f"width={collected.get('width')} mm, "
                         f"height={collected.get('height')} mm, "
-                        f"phi_mn={collected.get('phi_mn')} kN-m\n"
-                        f"- 예측: Sm={preds.get('Sm')} mm2, "
-                        f"bd={preds.get('bd')} mm2, "
+                        f"phi_mn={collected.get('phi_mn')} kN·m\n"
+                        f"- 예측: Sm={preds.get('Sm')} mm², "
+                        f"bd={preds.get('bd')} mm², "
                         f"rho={preds.get('rho')}, "
-                        f"phi_mn={preds.get('phi_mn')} kN-m\n"
-                        "형식 예: '단면계수 Sm은 () mm2, 철근비 rho는 (), 단면폭*주철근깊이 bd는 () mm2, 단면공칭휨강도는 () kN-m 입니다.' 와 유사하고 자연스럽게."
-                        )
+                        f"phi_mn={preds.get('phi_mn')} kN·m\n"
+                        "형식 예: '단면계수 Sm은 (), 철근비 rho는 (), bd는 (), 공칭휨강도는 () 입니다'."
+                    )
                     msgs = [
-                        {'role':'system', 'content':'sys_prompt'},
-                        {'role':'user', 'content':'user_prompt'}
-                        ]
+                        {'role':'system', 'content': sys_prompt},
+                        {'role':'user',   'content': user_prompt},
+                    ]
                     placeholder = st.empty()
                     visible, think = chat_once(llm, msgs, float(temp), float(topp), int(toks), placeholder)
                     placeholder.markdown(visible)
-                    st.session_state.history.append({'role':'assitant', 'content':visible})
+                    st.session_state.history.append({'role':'assistant', 'content': visible})
                 except Exception as e:
                     st.error(f"예측 실패: {e}")
                     st.session_state.history.append({"role":"assistant","content": f"예측 실패: {e}"})
@@ -315,58 +301,39 @@ if user_msg:
                 with st.chat_message("assistant"):
                     st.info(build_missing_prompt(missing))
                 did_predict = True
-            # else:
-            #     with st.chat_message("assistant"):
-            #         try:
-            #             import pandas as pd
-            #             preds = st.session_state.bundle.predict_all(base)
-            #             st.caption(f"inputs: { {k: base.get(k) for k in REQUIRED_INPUT} }")
-            #             df_show = pd.DataFrame([preds], columns=["Sm","bd","rho","phi_mn"])
-            #             st.markdown("**예측 결과**")
-            #             try:
-            #                 st.dataframe(df_show, width="stretch")
-            #             except Exception:
-            #                 st.dataframe(df_show, use_container_width=True) # 미지원시 폴백
-                        
-            #             st.session_state.history.append({
-            #                 "role":"assistant",
-            #                 "content": "예측 결과: " + ", ".join(f"{k}={v:.6g}" for k, v in preds.items())
-            #             })
-            #         except Exception as e:
-            #             st.error(f"예측 실패: {e}")
-            #             st.session_state.history.append({"role":"assistant","content": f"예측 실패: {e}"})
-            #     did_predict = True
             else:
                 with st.chat_message('assistant'):
                     try:
                         preds = st.session_state.bundle.predict_all(base)
                         sys_prompt = (
-                            "너는 구조공항 예측결과를 한국어로 보고하는 도우미다."
-                            "주어진 수치들을 변경하지 말고 그대로 사용해 한 문단으로 설명한다."
-                            )
+                            "너는 구조공학 예측 결과를 한국어로 보고하는 도우미다. "
+                            "주어진 수치를 변경하지 말고 그대로 한 문단으로 간결히 설명하라."
+                        )
                         user_prompt = (
-                            "입력값과 예측값을 문장으로 요약하세요\n"
+                            "입력값과 예측값을 문장으로 요약하세요.\n"
                             f"- 입력: fck={base.get('fck')} MPa, "
                             f"fy={base.get('fy')} MPa, "
                             f"width={base.get('width')} mm, "
                             f"height={base.get('height')} mm, "
-                            f"phi_mn={base.get('phi_mn')} kN-m\n"
-                            f"- 예측: Sm={preds.get('Sm')} mm2, "
-                            f"bd={preds.get('bd')} mm2, "
+                            f"phi_mn={base.get('phi_mn')} kN·m\n"
+                            f"- 예측: Sm={preds.get('Sm')} mm², "
+                            f"bd={preds.get('bd')} mm², "
                             f"rho={preds.get('rho')}, "
-                            f"phi_mn={preds.get('phi_mn')} kN-m\n"
-                            "형식 예: '단면계수 Sm은 () mm2, 철근비 rho는 (), 단면폭*주철근깊이 bd는 () mm2, 단면공칭휨강도는 () kN-m 입니다.' 와 유사하고 자연스럽게."
-                            )
+                            f"phi_mn={preds.get('phi_mn')} kN·m\n"
+                            "형식 예: '단면계수 Sm은 (), 철근비 rho는 (), bd는 (), 공칭휨강도는 () 입니다'."
+                        )
                         msgs = [
-                            {'role':'system', 'content':'sys_prompt'},
-                            {'role':'user', 'content':'user_prompt'}
-                            ]
+                            {'role':'system', 'content': sys_prompt},
+                            {'role':'user',   'content': user_prompt},
+                        ]
                         placeholder = st.empty()
                         visible, think = chat_once(llm, msgs, float(temp), float(topp), int(toks), placeholder)
                         placeholder.markdown(visible)
+                        st.session_state.history.append({'role':'assistant', 'content': visible})
                     except Exception as e:
                         st.error(f'예측 실패: {e}')
                         st.session_state.history.append({"role":"assistant","content": f"예측 실패: {e}"})
+                        
                 did_predict = True
 
     # 모델 응답 (예측 플로우가 아니거나 종료된 경우)
