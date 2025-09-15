@@ -125,7 +125,7 @@ def chat_once(llm: Llama, messages: List[Dict[str,str]], temperature: float, top
 # ---------- sidebar ----------
 with st.sidebar:
     st.header("⚙️ Settings")
-    model_path = st.text_input("Model (.gguf) path", r"c:\Users\BKHOME\mycode\chatbot\models\Qwen3-4B-Instruct-2507-Q3_K_S.gguf")
+    model_path = st.text_input("Model (.gguf) path", r"d:\mycode\chatbot\model\Qwen3-4B-Instruct-2507-Q3_K_S.gguf")
     chat_fmt_choice = st.selectbox("chat_format", ["auto","qwen","llama-3","none"], index=0)
     ctx = st.number_input("n_ctx", 256, 8192, 2048, 256)
     threads = st.number_input("n_threads", 1, 64, max(1,(os.cpu_count() or 4)-1), 1)
@@ -155,7 +155,7 @@ with st.sidebar:
     st.subheader("🧮 Regression bundle")
     if "bundle" not in st.session_state:
         st.session_state.bundle = None
-    bundle_path = st.text_input("bundle (.joblib) path", r"c:\Users\BKHOME\mycode\chatbot\xgb_bundle.joblib", key="bundle_path")    
+    bundle_path = st.text_input("bundle (.joblib) path", r"d:\mycode\rcmodel\output\xgb_bundle.joblib", key="bundle_path")    
     col_b1, col_b2 = st.columns([1,1])
     with col_b1:
         enable_predict = st.checkbox("Enable /predict", value=True, key="enable_predict")
