@@ -136,7 +136,7 @@ def chat_once(llm: Llama, messages: List[Dict[str,str]], temperature: float, top
 # ---------- sidebar ----------
 with st.sidebar:
     st.header("⚙️ Settings")
-    model_path = st.text_input("Model (.gguf) path", r"c:\Users\BKHOME\mycode\chatbot\models\Qwen3-4B-Instruct-2507-Q3_K_S.gguf")
+    model_path = st.text_input("Model (.gguf) path", r"d:\mycode\chatbot\model\Qwen3-4B-Instruct-2507-Q3_K_S.gguf")
     chat_fmt_choice = st.selectbox("chat_format", ["auto","qwen","llama-3","none"], index=0)
     ctx = st.number_input("n_ctx", 256, 8192, 2048, 256)
     threads = st.number_input("n_threads", 1, 64, max(1,(os.cpu_count() or 4)-1), 1)
@@ -166,12 +166,11 @@ with st.sidebar:
     st.subheader("🧮 Regression bundle")
     if "bundle" not in st.session_state:
         st.session_state.bundle = None
-    bundle_path = st.text_input("bundle (.joblib) path", r"c:\Users\BKHOME\mycode\rcmodel\output\xgb_bundle.joblib", key="bundle_path")    
+    bundle_path = st.text_input("bundle (.joblib) path", r"d:\mycode\rcmodel\output\xgb_bundle.joblib", key="bundle_path")    
     load_bundle_btn = st.button("Load bundle", width="stretch", key="btn_load_bundle")
 
     if load_bundle_btn:
         try:
-            # st.session_state.bundle = ModelBundle.load(bundle_path)
             st.session_state.bundle = load_bundle_cached(bundle_path)
             st.success(f"Bundle loaded: {', '.join(st.session_state.bundle.targets)}")
         except Exception as e:
@@ -221,15 +220,10 @@ if user_msg:
     # enable = st.session_state.get("enable_predict")
     bundle_loaded = st.session_state.get("bundle") is not None
 
-    # 0) 번들 미로드/비활성 시 안내
-    # if (user_msg.strip().lower().startswith("/predict") or "강도" in user_msg or "휨모멘트" in user_msg) and not (enable and bundle_loaded):
+    # 0) 번들 미로드/비활성 시 안내    
     intent_now = is_predict_intent(user_msg) or (parse_predict_message(user_msg) is not None) or (len(parse_predict_natural(user_msg)) > 0)
     if intent_now and not bundle_loaded:
         with st.chat_message("assistant"):
-            # if not enable:
-            #     st.warning("Enable /predict 를 체크하세요.")
-            # if not bundle_loaded:
-            #     st.warning("번들이 로드되지 않았습니다. 사이드바에서 경로 확인 후 **Load bundle**.")
             st.warning("bundle 이 로드되지 않았습니다. 경로 확인후 **Load bundle**.")
         did_predict = True
 
