@@ -72,6 +72,14 @@ powershell 에서 로컬 파일 설치(오프라인):
 pip install --no-index --find-links=[deps 폴더] [llama-cpp-python whl]
 pip install --no-index --find-links=./deps llama_cpp_python-0.3.16-cp312-cp312-win_amd64.whl (use --force-reinstall if needed)
 
+files in /dep folder:
+typing_extensions-4.14.1-py3-none-any.whl
+numpy-2.3.2-cp312-cp312-win_amd64.whl
+MarkupSafe-3.0.2-cp312-cp312-win_amd64.whl
+llama_cpp_python-0.3.16.tar.gz
+jinja2-3.1.6-py3-none-any.whl
+diskcache-5.6.3-py3-none-any.whl
+
 설치 확인:
 pip show llama-cpp-python
 
