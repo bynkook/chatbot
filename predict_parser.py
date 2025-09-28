@@ -64,12 +64,19 @@ _UNIT_MPA = r"(?:MPa|메가파스칼)?"
 _UNIT_MM = r"(?:mm|밀리미터)?"
 _UNIT_KNM = r"(?:kN[\-\s·]?m|kNm|킬로뉴턴미터)?"
 
+_NUM = r"([-+]?\d+(?:\.\d+)?)"
+_SP = r"[ \t]*"
+_UNIT_MPA = r"(?:MPa|메가파스칼)?"
+_UNIT_MM = r"(?:mm|밀리미터)?"
+_UNIT_KNM = r"(?:kN[\-\s·]?m|kNm|킬로뉴턴미터)?"
+
 _PATTERNS = {
-    "fck": re.compile(rf"(?:콘크리트\s*강도|설계\s*압축강도|fck){_SP}[:=]?\s*{_NUM}\s*{_UNIT_MPA}", re.IGNORECASE),
-    "fy": re.compile(rf"(?:철근\s*항복강도|항복\s*강도|fy){_SP}[:=]?\s*{_NUM}", re.IGNORECASE),
-    "width": re.compile(rf"(?:단면\s*폭|폭|width|b|bw){_SP}[:=]?\s*{_NUM}\s*{_UNIT_MM}", re.IGNORECASE),
-    "height": re.compile(rf"(?:단면\s*높이|높이|height|h){_SP}[:=]?\s*{_NUM}\s*{_UNIT_MM}", re.IGNORECASE),
-    "phi_mn": re.compile(rf"(?:휨\s*모멘트|공칭휨강도|Mu|phi[_\-]?mn){_SP}[:=]?\s*{_NUM}\s*{_UNIT_KNM}", re.IGNORECASE),
+    # 단어 경계 적용: \b 또는 lookaround로 약어(b,h,mu 등)가 단어 내부(width, bd 등)에 매칭되지 않도록 함
+    "fck": re.compile(rf"(?:콘크리트\s*강도|설계\s*압축강도|\bfck\b){_SP}[:=]?\s*{_NUM}\s*{_UNIT_MPA}", re.IGNORECASE),
+    "fy": re.compile(rf"(?:철근\s*항복강도|항복\s*강도|\bfy\b){_SP}[:=]?\s*{_NUM}", re.IGNORECASE),
+    "width": re.compile(rf"(?:단면\s*폭|폭|\bwidth\b|\bbw\b|(?<![A-Za-z])b(?![A-Za-z])){_SP}[:=]?\s*{_NUM}\s*{_UNIT_MM}", re.IGNORECASE),
+    "height": re.compile(rf"(?:단면\s*높이|높이|\bheight\b|(?<![A-Za-z])h(?![A-Za-z])){_SP}[:=]?\s*{_NUM}\s*{_UNIT_MM}", re.IGNORECASE),
+    "phi_mn": re.compile(rf"(?:휨\s*모멘트|공칭휨강도|\bmu\b|\bphi[_\-]?mn\b){_SP}[:=]?\s*{_NUM}\s*{_UNIT_KNM}", re.IGNORECASE),
 }
 
 def parse_predict_natural(text: str) -> Dict[str, float]:

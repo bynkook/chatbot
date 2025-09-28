@@ -86,5 +86,8 @@ in powershell:
 .\.venvllm\Scripts\activate.ps1
 
 in powershell, run:
-streamlit run chat_app.py
 streamlit run chat_app_V2.1.py
+
+input:
+/predict fck=27, fy=400, width=800, height=1000, mu=2000
+콘크리트 단면의 정보는 fck=27, 철근강도 fy=400 MPa, 단면폭=800mm, 단면높이=1000mm, mu=2000 kN-m 가 작용할때 철근비와 단면공칭휨강도는?

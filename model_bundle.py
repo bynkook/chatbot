@@ -31,35 +31,49 @@ class ModelBundle:
 
     def predict_all(self, inputs: Dict[str, float]) -> Dict[str, float]:
         """
-        inputs: keys 포함 권장 -> fck, fy, width, height, phi_mn
-        내부에서 f_idx 산출 후 각 타깃별 필요 피처만 추출하여 예측.
+        FastAPI 버전과 동일하게 반복 예측(동시 갱신) 방식 적용.
         """
-        # 필수 변환: f_idx = concat(fck, fy)/1000  (예: 27, 400 -> 27400/1000 = 27.4)
+        # f_idx 계산
         fck = float(inputs.get("fck"))
         fy  = float(inputs.get("fy"))
         try:
             f_idx = float(f"{int(round(fck))}{int(round(fy))}") / 1000.0
         except Exception:
-            # fallback: 단순 조합 불가 시 사용자가 직접 f_idx를 준 경우 우선
             f_idx = float(inputs.get("f_idx"))
-        # 기본 피처 풀
-        base = {
+
+        # 초기 payload
+        feat_iter: Dict[str, float] = {
             "f_idx": f_idx,
             "width": float(inputs.get("width")),
             "height": float(inputs.get("height")),
-            "Sm": float(inputs.get("Sm")) if inputs.get("Sm") is not None else np.nan,
-            "bd": float(inputs.get("bd")) if inputs.get("bd") is not None else np.nan,
-            "rho": float(inputs.get("rho")) if inputs.get("rho") is not None else np.nan,
             "phi_mn": float(inputs.get("phi_mn")) if inputs.get("phi_mn") is not None else np.nan,
         }
 
-        out: Dict[str, float] = {}
-        for tgt in self.targets:
-            feats = self.features_by_target[tgt]
-            row = {k: base.get(k, np.nan) for k in feats}
-            X = pd.DataFrame([row], columns=feats)
+        last_preds: Dict[str, float] = {}
+        MAX_ITERS = 5
+        for it in range(MAX_ITERS):
+            preds_k: Dict[str, float] = {}
+            for tgt in self.targets:
+                feats = self.features_by_target[tgt]
+                row = {f: feat_iter.get(f, np.nan) for f in feats}
+                X = pd.DataFrame([row], columns=feats)
+                try:
+                    preds_k[tgt] = float(self.models[tgt].predict(X)[0])
+                except Exception:
+                    preds_k[tgt] = np.nan
 
-            # 파이프라인 전처리가 결측을 처리하므로 결측 허용
-            yhat = float(self.models[tgt].predict(X)[0])
-            out[tgt] = yhat
-        return out
+            # --- debug: per-iteration echo ---
+            print(f"[DEBUG] iter {it+1}, preds={preds_k}")
+
+            # 동시 갱신: bd, Sm, rho
+            if np.isfinite(preds_k.get("bd", np.nan)):
+                feat_iter["bd"] = preds_k["bd"]
+            if np.isfinite(preds_k.get("Sm", np.nan)):
+                feat_iter["Sm"] = preds_k["Sm"]
+            if np.isfinite(preds_k.get("rho", np.nan)):
+                feat_iter["rho"] = preds_k["rho"]
+
+            last_preds = preds_k
+
+        print("[DEBUG] predict_all final outputs:", last_preds)
+        return last_preds

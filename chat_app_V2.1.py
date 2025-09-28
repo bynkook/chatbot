@@ -136,7 +136,7 @@ def chat_once(llm: Llama, messages: List[Dict[str,str]], temperature: float, top
 # ---------- sidebar ----------
 with st.sidebar:
     st.header("⚙️ Settings")
-    model_path = st.text_input("Model (.gguf) path", r"d:\mycode\chatbot\model\Qwen3-4B-Instruct-2507-Q3_K_S.gguf")
+    model_path = st.text_input("Model (.gguf) path", r"c:\Users\BKHOME\mycode\chatbot\models\Qwen3-4B-Instruct-2507-Q3_K_S.gguf")
     chat_fmt_choice = st.selectbox("chat_format", ["auto","qwen","llama-3","none"], index=0)
     ctx = st.number_input("n_ctx", 256, 8192, 2048, 256)
     threads = st.number_input("n_threads", 1, 64, max(1,(os.cpu_count() or 4)-1), 1)
@@ -166,7 +166,7 @@ with st.sidebar:
     st.subheader("🧮 Regression bundle")
     if "bundle" not in st.session_state:
         st.session_state.bundle = None
-    bundle_path = st.text_input("bundle (.joblib) path", r"d:\mycode\rcmodel\output\xgb_bundle.joblib", key="bundle_path")    
+    bundle_path = st.text_input("bundle (.joblib) path", r"c:\Users\BKHOME\mycode\rcmodel\output\stack_bundle_1.joblib", key="bundle_path")
     load_bundle_btn = st.button("Load bundle", width="stretch", key="btn_load_bundle")
 
     if load_bundle_btn:
@@ -229,10 +229,20 @@ if user_msg:
 
     # 1) 마법사 진행 중이면 수집 계속    
     if not did_predict and st.session_state.predict_wizard["active"] and bundle_loaded:
-        # 양쪽 파서로 추가 정보 수집
-        d_cli = parse_predict_message(user_msg) or {}
-        d_nat = parse_predict_natural(user_msg) or {}
+        # CLI 메시지에는 자연어 파서를 적용하지 않아 값 덮어쓰기를 방지
+        if user_msg.strip().lower().startswith("/predict"):
+            d_cli = parse_predict_message(user_msg) or {}
+            d_nat = {}
+        else:
+            d_cli = parse_predict_message(user_msg) or {}
+            d_nat = parse_predict_natural(user_msg) or {}
         st.session_state.predict_wizard["data"].update({**d_nat, **d_cli})
+
+        merged = {**d_nat, **d_cli}
+        st.session_state.predict_wizard["data"].update(merged)
+        # --- debug: 예측 입력 echo ---
+        print("[DEBUG] predict_wizard step inputs:", merged)
+
         collected = st.session_state.predict_wizard["data"]
         missing = [k for k in REQUIRED_INPUT if k not in collected]
         if missing:
@@ -279,8 +289,12 @@ if user_msg:
 
     # 2) 새 입력으로 마법사 시작 여부 결정    
     if not did_predict and bundle_loaded:
-        d_cli0 = parse_predict_message(user_msg or "")
-        d_nat0 = parse_predict_natural(user_msg or "")
+        if user_msg.strip().lower().startswith("/predict"):
+            d_cli0 = parse_predict_message(user_msg or "") or {}
+            d_nat0 = {}
+        else:
+            d_cli0 = parse_predict_message(user_msg or "") or {}
+            d_nat0 = parse_predict_natural(user_msg or "") or {}
         # trigger = (d_cli0 is not None) or (len(d_nat0) > 0)
         trigger = intent_now
         if trigger:
@@ -289,7 +303,11 @@ if user_msg:
             if isinstance(d_cli0, dict):
                 base.update(d_cli0)
             base.update(d_nat0)
+            
+            # --- debug: 최초 예측 입력 echo ---
+            print("[DEBUG] initial predict inputs:", base)
             missing = [k for k in REQUIRED_INPUT if k not in base]
+
             if missing:
                 st.session_state.predict_wizard = {"active": True, "data": base}
                 with st.chat_message("assistant"):
